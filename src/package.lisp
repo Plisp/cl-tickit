@@ -1,3 +1,3 @@
-(cl:defpackage :cl-tickit
-  (:use :cl :cffi)
-  (:nicknames :tkt))
+(cl:defpackage #:cl-tickit
+  (:use #:cl)
+  (:nicknames #:tkt))

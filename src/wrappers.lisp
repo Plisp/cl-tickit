@@ -1,4 +1,4 @@
-(in-package :cl-tickit)
+(in-package #:cl-tickit)
 
 (include "tickit.h")
 

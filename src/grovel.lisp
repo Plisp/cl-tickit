@@ -1,4 +1,4 @@
-(in-package :cl-tickit)
+(in-package #:cl-tickit)
 
 (cc-flags "-std=c11")
 

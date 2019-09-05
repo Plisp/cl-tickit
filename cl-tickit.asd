@@ -3,7 +3,7 @@
   :description "A set of CFFI bindings to the C libtickit library."
   :license "MIT License"
   :defsystem-depends-on ("cffi-grovel")
-  :depends-on (:cffi :cl-unicode :trivial-features)
+  :depends-on (:cffi :trivial-features)
   :serial t
   :pathname "src/"
   :components ((:module bin

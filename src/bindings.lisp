@@ -1,18 +1,30 @@
 (in-package #:cl-tickit)
 
 (cffi:define-foreign-library libtickit
-  (:unix (:or "libtickit.so.2.0.2" "libtickit.so.2"))
+    (:unix (:or "libtickit.so.2.0.2" "libtickit.so.2"))
   (t (:default "libtickit")))
 
 (cffi:use-foreign-library libtickit)
 
-;;; wrapper library for functions passing structs on the stack
+;;;
 
 (defvar *wrapper-path*
+  #+(and x86-64 unix)
   (make-pathname
-   :directory `(:absolute
-                ,(namestring (asdf:system-source-directory :cl-tickit)) "src" "struct-wrapper")
-   :name "struct-wrapper.so"))
+   :name "struct-wrapper"
+   :type "so"
+   :defaults (merge-pathnames
+              (make-pathname :directory '(:relative "bin"))
+              (asdf:system-source-directory :cl-tickit)))
+  #+(and x86 unix)
+  (make-pathname
+   :name "struct-wrapper-x86"
+   :type "so"
+   :defaults (merge-pathnames
+              (make-pathname :directory '(:relative "bin"))
+              (asdf:system-source-directory :cl-tickit)))
+  "Binaries of my little wrapper for struct passing functions. Binaries only
+provided for unix as libtickit probably doesn't work on windows anyway.")
 
 (cffi:load-foreign-library *wrapper-path*)
 
@@ -24,13 +36,13 @@
 
 ;;;SWIG wrapper code starts here
 
-(defmacro defanonenum (&body enums)
+(cl:defmacro defanonenum (cl:&body enums)
   "Converts anonymous enums to defconstants."
-  `(progn ,@(loop for value in enums
-                  for index = 0 then (1+ index)
-                  when (listp value) do (setf index (second value)
-                                              value (first value))
-                    collect `(defconstant ,value ,index))))
+  `(cl:progn ,@(cl:loop for value in enums
+                  for index = 0 then (cl:1+ index)
+                  when (cl:listp value) do (cl:setf index (cl:second value)
+                                                    value (cl:first value))
+                    collect `(cl:defconstant ,value ,index))))
 
 ;;;SWIG wrapper code ends here
 
@@ -51,13 +63,13 @@
 (cffi:defctype TickitTermDriver :pointer)
 
 (defanonenum
-	(TICKIT_MOD_SHIFT #.#x01)
-	(TICKIT_MOD_ALT #.#x02)
-	(TICKIT_MOD_CTRL #.#x04))
+    (TICKIT-MOD-SHIFT #.#x01)
+    (TICKIT-MOD-ALT #.#x02)
+	  (TICKIT-MOD-CTRL #.#x04))
 
 (defanonenum
-	(TICKIT_MOUSEWHEEL_UP #.1)
-	TICKIT_MOUSEWHEEL_DOWN)
+    (TICKIT-MOUSEWHEEL-UP #.1)
+	  TICKIT-MOUSEWHEEL-DOWN)
 
 (cffi:defcfun "tickit_pen_new" :pointer)
 
@@ -74,28 +86,28 @@
 (cffi:defcfun "tickit_pen_unref" :void
   (pen :pointer))
 
-(cffi:defcfun "tickit_pen_has_attr" :bool
+(cffi:defcfun "tickit_pen_has_attr" bool
   (pen :pointer)
   (attr TickitPenAttr))
 
-(cffi:defcfun "tickit_pen_is_nonempty" :bool
+(cffi:defcfun "tickit_pen_is_nonempty" bool
   (pen :pointer))
 
-(cffi:defcfun "tickit_pen_nondefault_attr" :bool
+(cffi:defcfun "tickit_pen_nondefault_attr" bool
   (pen :pointer)
   (attr TickitPenAttr))
 
-(cffi:defcfun "tickit_pen_is_nondefault" :bool
+(cffi:defcfun "tickit_pen_is_nondefault" bool
   (pen :pointer))
 
-(cffi:defcfun "tickit_pen_get_bool_attr" :bool
+(cffi:defcfun "tickit_pen_get_bool_attr" bool
   (pen :pointer)
   (attr TickitPenAttr))
 
 (cffi:defcfun "tickit_pen_set_bool_attr" :void
   (pen :pointer)
   (attr TickitPenAttr)
-  (val :bool))
+  (val bool))
 
 (cffi:defcfun "tickit_pen_get_int_attr" :int
   (pen :pointer)
@@ -117,7 +129,7 @@
 
 
 
-(cffi:defcfun "tickit_pen_has_colour_attr_rgb8" :bool
+(cffi:defcfun "tickit_pen_has_colour_attr_rgb8" bool
   (pen :pointer)
   (attr TickitPenAttr))
 
@@ -133,7 +145,7 @@
   (attr TickitPenAttr)
   (value :pointer))
 
-(cffi:defcfun "tickit_pen_set_colour_attr_desc" :bool
+(cffi:defcfun "tickit_pen_set_colour_attr_desc" bool
   (pen :pointer)
   (attr TickitPenAttr)
   (value :string))
@@ -145,12 +157,12 @@
 (cffi:defcfun "tickit_pen_clear" :void
   (pen :pointer))
 
-(cffi:defcfun "tickit_pen_equiv_attr" :bool
+(cffi:defcfun "tickit_pen_equiv_attr" bool
   (a :pointer)
   (b :pointer)
   (attr TickitPenAttr))
 
-(cffi:defcfun "tickit_pen_equiv" :bool
+(cffi:defcfun "tickit_pen_equiv" bool
   (a :pointer)
   (b :pointer))
 
@@ -162,7 +174,7 @@
 (cffi:defcfun "tickit_pen_copy" :void
   (dst :pointer)
   (src :pointer)
-  (overwrite :bool))
+  (overwrite bool))
 
 (cffi:defctype TickitPenEventFn :pointer)
 
@@ -215,16 +227,16 @@
   (downward :int)
   (rightward :int))
 
-(cffi:defcfun "tickit_rect_intersect" :bool
+(cffi:defcfun "tickit_rect_intersect" bool
   (dst :pointer)
   (a :pointer)
   (b :pointer))
 
-(cffi:defcfun "tickit_rect_intersects" :bool
+(cffi:defcfun "tickit_rect_intersects" bool
   (a :pointer)
   (b :pointer))
 
-(cffi:defcfun "tickit_rect_contains" :bool
+(cffi:defcfun "tickit_rect_contains" bool
   (large :pointer)
   (small :pointer))
 
@@ -272,11 +284,11 @@
   (downward :int)
   (rightward :int))
 
-(cffi:defcfun "tickit_rectset_intersects" :bool
+(cffi:defcfun "tickit_rectset_intersects" bool
   (trs :pointer)
   (rect :pointer))
 
-(cffi:defcfun "tickit_rectset_contains" :bool
+(cffi:defcfun "tickit_rectset_contains" bool
   (trs :pointer)
   (rect :pointer))
 
@@ -369,7 +381,7 @@
 
 (cffi:defcfun "tickit_term_set_utf8" :void
   (tt :pointer)
-  (utf8 :bool))
+  (utf8 bool))
 
 (cffi:defcfun "tickit_term_input_push_bytes" :void
   (tt :pointer)
@@ -405,7 +417,7 @@
 
 (cffi:defcfun "tickit_term_observe_sigwinch" :void
   (tt :pointer)
-  (observe :bool))
+  (observe bool))
 
 (cffi:defctype TickitTermEventFn :pointer)
 
@@ -441,7 +453,7 @@
   (fmt :string)
   (args :pointer))
 
-(cffi:defcfun "tickit_term_goto" :bool
+(cffi:defcfun "tickit_term_goto" bool
   (tt :pointer)
   (line :int)
   (col :int))
@@ -451,7 +463,7 @@
   (downward :int)
   (rightward :int))
 
-(cffi:defcfun "tickit_term_scrollrect_ptr" :bool
+(cffi:defcfun "tickit_term_scrollrect_ptr" bool
   (tt :pointer)
   (rect :pointer)
   (downward :int)
@@ -473,17 +485,17 @@
   (count :int)
   (moveend TickitMaybeBool))
 
-(cffi:defcfun "tickit_term_getctl_int" :bool
+(cffi:defcfun "tickit_term_getctl_int" bool
   (tt :pointer)
   (ctl TickitTermCtl)
   (value :pointer))
 
-(cffi:defcfun "tickit_term_setctl_int" :bool
+(cffi:defcfun "tickit_term_setctl_int" bool
   (tt :pointer)
   (ctl TickitTermCtl)
   (value :int))
 
-(cffi:defcfun "tickit_term_setctl_str" :bool
+(cffi:defcfun "tickit_term_setctl_str" bool
   (tt :pointer)
   (ctl TickitTermCtl)
   (value :string))
@@ -599,7 +611,7 @@
   (rb :pointer)
   (mask :pointer))
 
-(cffi:defcfun "tickit_renderbuffer_has_cursorpos" :bool
+(cffi:defcfun "tickit_renderbuffer_has_cursorpos" bool
   (rb :pointer))
 
 (cffi:defcfun "tickit_renderbuffer_get_cursorpos" :void
@@ -862,7 +874,7 @@
 (cffi:defcfun "tickit_window_hide" :void
   (win :pointer))
 
-(cffi:defcfun "tickit_window_is_visible" :bool
+(cffi:defcfun "tickit_window_is_visible" bool
   (win :pointer))
 
 (cffi:defcfun "tickit_window_get_geometry_ptr" :pointer
@@ -905,19 +917,19 @@
 (cffi:defcfun "tickit_window_flush" :void
   (win :pointer))
 
-(cffi:defcfun "tickit_window_scrollrect" :bool
+(cffi:defcfun "tickit_window_scrollrect" bool
   (win :pointer)
   (rect :pointer)
   (downward :int)
   (rightward :int)
   (pen :pointer))
 
-(cffi:defcfun "tickit_window_scroll" :bool
+(cffi:defcfun "tickit_window_scroll" bool
   (win :pointer)
   (downward :int)
   (rightward :int))
 
-(cffi:defcfun "tickit_window_scroll_with_children" :bool
+(cffi:defcfun "tickit_window_scroll_with_children" bool
   (win :pointer)
   (downward :int)
   (rightward :int))
@@ -929,7 +941,7 @@
 
 (cffi:defcfun "tickit_window_set_cursor_visible" :void
   (win :pointer)
-  (visible :bool))
+  (visible bool))
 
 (cffi:defcfun "tickit_window_set_cursor_shape" :void
   (win :pointer)
@@ -938,29 +950,29 @@
 (cffi:defcfun "tickit_window_take_focus" :void
   (win :pointer))
 
-(cffi:defcfun "tickit_window_is_focused" :bool
+(cffi:defcfun "tickit_window_is_focused" bool
   (win :pointer))
 
 (cffi:defcfun "tickit_window_set_focus_child_notify" :void
   (win :pointer)
-  (notify :bool))
+  (notify bool))
 
-(cffi:defcfun "tickit_window_getctl_int" :bool
+(cffi:defcfun "tickit_window_getctl_int" bool
   (win :pointer)
   (ctl TickitWindowCtl)
   (value :pointer))
 
-(cffi:defcfun "tickit_window_setctl_int" :bool
+(cffi:defcfun "tickit_window_setctl_int" bool
   (win :pointer)
   (ctl TickitWindowCtl)
   (value :int))
 
-(cffi:defcfun "tickit_window_is_steal_input" :bool
+(cffi:defcfun "tickit_window_is_steal_input" bool
   (win :pointer))
 
 (cffi:defcfun "tickit_window_set_steal_input" :void
   (win :pointer)
-  (steal :bool))
+  (steal bool))
 
 (cffi:defcfun "tickit_window_ctlname" :string
   (ctl TickitWindowCtl))
@@ -1000,12 +1012,12 @@
   (t_arg0 :pointer)
   (flags TickitRunFlags))
 
-(cffi:defcfun "tickit_getctl_int" :bool
+(cffi:defcfun "tickit_getctl_int" bool
   (tt :pointer)
   (ctl TickitCtl)
   (value :pointer))
 
-(cffi:defcfun "tickit_setctl_int" :bool
+(cffi:defcfun "tickit_setctl_int" bool
   (tt :pointer)
   (ctl TickitCtl)
   (value :int))
@@ -1071,7 +1083,7 @@
 
 (cffi:defcfun "tickit_debug_init" :void)
 
-(cffi:defcvar "tickit_debug_enabled" :bool)
+(cffi:defcvar "tickit_debug_enabled" bool)
 
 (cffi:defcfun "tickit_debug_logf" :void
   (flag :string)
@@ -1090,9 +1102,11 @@
 (cffi:defcfun "tickit_debug_set_fh" :void
   (fh :pointer))
 
-(cffi:defcfun "tickit_debug_open" :bool
+(cffi:defcfun "tickit_debug_open" bool
   (path :string))
 
 (do-symbols (s)
   (when (eq (symbol-package s) *package*)
-    (export s)))
+    (export s))
+  (export 'type) ; cl symbols
+  (export 'mod))

@@ -2,6 +2,9 @@
 
 (cc-flags "-std=c11")
 
+;; os dependant
+(ctype bool "bool")
+
 (ctype size-t "size_t")
 (ctype time-t "time_t")
 
@@ -213,8 +216,8 @@
          (west "west" :type :char))
 
 (cstruct TickitRenderBufferSpanInfo "struct TickitRenderBufferSpanInfo"
-         (activep "is_active" :type :bool)
-         (columns "n_columns" :type :int)
+         (is-active "is_active" :type bool)
+         (n-columns "n_columns" :type :int)
          (text "text" :type :string)
-         (length "len" :type size-t)
+         (len "len" :type size-t)
          (pen "pen" :type :pointer))
